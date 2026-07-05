@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚛 Çift Taraflı Eşleştirme</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0e1a;
+            color: #fff;
+            padding: 15px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #1a1f36, #2a1f36);
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #2a2f4a;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .header h1 {
+            font-size: 22px;
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header .stats {
+            display: flex;
+            gap: 20px;
+            font-size: 13px;
+            flex-wrap: wrap;
+        }
+        .header .stats span {
+            color: #8892b0;
+        }
+        .header .stats strong {
+            color: #4facfe;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 80px 1fr;
+            gap: 15px;
+            height: calc(100vh - 120px);
+        }
+
+        /* PANEL */
+        .panel {
+            background: linear-gradient(180deg, #1a1f36, #0d1225);
+            border-radius: 12px;
+            padding: 12px;
+            border: 1px solid #2a2f4a;
+            display: flex;
+            flex-direction: column;
+        }
+        .panel-title {
+            font-size: 14px;
+            color: #8892b0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #2a2f4a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .panel-title .count {
+            background: #4facfe;
+            color: #fff;
+            padding: 2px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        .panel-body {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        .panel-body::-webkit-scrollbar {
+            width: 4px;
+        }
+        .panel-body::-webkit-scrollbar-thumb {
+            background: #4facfe;
+            border-radius: 10px;
+        }
+
+        /* İL SATIRI */
+        .il-row {
+            display: grid;
+            grid-template-columns: 80px 1fr 100px;
+            gap: 8px;
+            align-items: center;
+            padding: 6px 8px;
+            margin: 2px 0;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            transition: all 0.3s;
+            border: 1px solid transparent;
+        }
+        .il-row:hover {
+            background: rgba(79, 172, 254, 0.08);
+            border-color: #2a2f4a;
+        }
+        .il-row .plaka {
+            color: #4facfe;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .il-row .il-adi {
+            font-size: 13px;
+            font-weight: 500;
+            color: #e0e0e0;
+        }
+        .il-row .il-adi input {
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 13px;
+            width: 100%;
+            outline: none;
+            padding: 2px 5px;
+            border-radius: 4px;
+        }
+        .il-row .il-adi input:focus {
+            background: rgba(79, 172, 254, 0.1);
+        }
+        .il-row .il-adi input::placeholder {
+            color: #555;
+            font-size: 11px;
+        }
+        .il-row .eslesme {
+            font-size: 12px;
+            padding: 3px 10px;
+            border-radius: 12px;
+            text-align: center;
+            min-width: 60px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #8892b0;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .il-row .eslesme.eslesti {
+            background: #2ecc71;
+            color: #fff;
+            font-weight: bold;
+        }
+        .il-row .eslesme.beklemede {
+            background: #f39c12;
+            color: #fff;
+        }
+        .il-row .eslesme.bos {
+            background: rgba(255, 255, 255, 0.05);
+            color: #555;
+        }
+
+        .il-row .status-icon {
+            font-size: 16px;
+            text-align: center;
+        }
+
+        /* ORTA BÖLÜM */
+        .orta-panel {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            padding: 10px 0;
+        }
+        .orta-panel .arrow {
+            font-size: 40px;
+            color: #4facfe;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.5;
+                transform: scale(0.9);
+            }
+        }
+        .orta-panel .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+        }
+        .orta-panel .btn:hover {
+            transform: scale(1.05);
+        }
+        .btn-success {
+            background: #2ecc71;
+            color: #fff;
+        }
+        .btn-success:hover {
+            background: #27ae60;
+        }
+        .btn-primary {
+            background: #4facfe;
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: #3d8fd9;
+        }
+        .btn-danger {
+            background: #e74c3c;
+            color: #fff;
+        }
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        .btn-warning {
+            background: #f39c12;
+            color: #fff;
+        }
+        .btn-warning:hover {
+            background: #d68910;
+        }
+
+        /* POPUP */
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #1a1f36;
+            border: 2px solid #4facfe;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            z-index: 1000;
+            display: none;
+        }
+        .popup.active {
+            display: block;
+            animation: popIn 0.3s ease;
+        }
+        @keyframes popIn {
+            from {
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 0;
+            }
+            to {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+        .popup .close {
+            float: right;
+            cursor: pointer;
+            color: #e74c3c;
+            font-size: 24px;
+        }
+        .popup h3 {
+            color: #4facfe;
+            margin-bottom: 15px;
+        }
+        .popup input {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            background: #0d1225;
+            border: 1px solid #2a2f4a;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+        }
+        .popup input:focus {
+            border-color: #4facfe;
+            outline: none;
+        }
+        .popup .btn {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+            display: none;
+        }
+        .overlay.active {
+            display: block;
+        }
+
+        .eslesme-bilgi {
+            font-size: 12px;
+            color: #2ecc71;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        @media (max-width: 900px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            .panel {
+                max-height: 400px;
+            }
+            .orta-panel {
+                flex-direction: row;
+                flex-wrap: wrap;
+                padding: 10px;
+            }
+            .orta-panel .arrow {
+                font-size: 24px;
+                transform: rotate(90deg);
+            }
+            .orta-panel .btn {
+                width: auto;
+                padding: 8px 15px;
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔄 Çift Taraflı Eşleştirme Sistemi</h1>
+            <div class="stats">
+                <span>📍 <strong id="toplamIl">81</strong> İl</span>
+                <span>🔗 <strong id="eslesenSayi">0</strong> Eşleşti</span>
+                <span>⏳ <strong id="bekleyenSayi">0</strong> Beklemede</span>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <!-- SOL PANEL -->
+            <div class="panel">
+                <div class="panel-title">
+                    <span>📍 SOL TARAFA İSİM YAZ</span>
+                    <span class="count" id="solCount">81</span>
+                </div>
+                <div class="panel-body" id="solPanel"></div>
+            </div>
+
+            <!-- ORTA PANEL -->
+            <div class="orta-panel">
+                <div class="arrow">➜</div>
+                <button class="btn btn-success" onclick="eslestir()">⚡ EŞLEŞTİR</button>
+                <button class="btn btn-primary" onclick="rastgeleEkle()">🎲 RASTGELE</button>
+                <button class="btn btn-warning" onclick="bosalt()">🗑 TEMİZLE</button>
+                <div class="arrow">➜</div>
+                <div class="eslesme-bilgi" id="eslesmeBilgi">Eşleştirme bekleniyor...</div>
+            </div>
+
+            <!-- SAĞ PANEL -->
+            <div class="panel">
+                <div class="panel-title">
+                    <span>📍 SAĞ TARAFTA İSİM YAZ</span>
+                    <span class="count" id="sagCount">81</span>
+                </div>
+                <div class="panel-body" id="sagPanel"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- POPUP -->
+    <div class="overlay" id="overlay" onclick="popupKapat()"></div>
+    <div class="popup" id="popup">
+        <span class="close" onclick="popupKapat()">✕</span>
+        <h3 id="popupBaslik">📝 İsim Düzenle</h3>
+        <input type="text" id="popupInput" placeholder="İsim giriniz...">
+        <button class="btn btn-success" onclick="popupKaydet()">💾 Kaydet</button>
+    </div>
+
+    <script>
+        // 81 İL
+        const iller = [
+            "Adana", "Adıyaman", "Afyonkarahisar", "Ağrı", "Aksaray", "Amasya", "Ankara",
+            "Antalya", "Ardahan", "Artvin", "Aydın", "Balıkesir", "Bartın", "Batman",
+            "Bayburt", "Bilecik", "Bingöl", "Bitlis", "Bolu", "Burdur", "Bursa",
+            "Çanakkale", "Çankırı", "Çorum", "Denizli", "Diyarbakır", "Düzce",
+            "Edirne", "Elazığ", "Erzincan", "Erzurum", "Eskişehir", "Gaziantep",
+            "Giresun", "Gümüşhane", "Hakkâri", "Hatay", "Iğdır", "Isparta",
+            "İstanbul", "İzmir", "Kahramanmaraş", "Karabük", "Karaman", "Kars",
+            "Kastamonu", "Kayseri", "Kırıkkale", "Kırklareli", "Kırşehir",
+            "Kilis", "Kocaeli", "Konya", "Kütahya", "Malatya", "Manisa",
+            "Mardin", "Mersin", "Muğla", "Muş", "Nevşehir", "Niğde", "Ordu",
+            "Osmaniye", "Rize", "Sakarya", "Samsun", "Siirt", "Sinop", "Sivas",
+            "Şanlıurfa", "Şırnak", "Tekirdağ", "Tokat", "Trabzon", "Tunceli",
+            "Uşak", "Van", "Yalova", "Yozgat", "Zonguldak"
+        ];
+
+        // Veri yapısı
+        let solData = {};
+        let sagData = {};
+        let eslesmeler = {};
+        let popupTarget = null;
+
+        // Başlat
+        function baslat() {
+            iller.forEach((il) => {
+                solData[il] = { isim: '', eslesti: false };
+                sagData[il] = { isim: '', eslesti: false };
+                eslesmeler[il] = null;
+            });
+            render();
+        }
+
+        // Render
+        function render() {
+            renderPanel('sol', solData);
+            renderPanel('sag', sagData);
+            updateStats();
+            updateEslesmeBilgi();
+        }
+
+        function renderPanel(taraf, data) {
+            const container = document.getElementById(taraf + 'Panel');
+            container.innerHTML = '';
+            let eslesen = 0;
+
+            iller.forEach((il, index) => {
+                const row = document.createElement('div');
+                row.className = 'il-row';
+
+                const item = data[il];
+                if (item.eslesti) eslesen++;
+
+                const eslesmeDurum = item.eslesti ? 'eslesti' : (item.isim ? 'beklemede' : 'bos');
+                const eslesmeText = item.eslesti ? '✅ Eşleşti' : (item.isim ? '⏳ Bekliyor' : '☐ Boş');
+
+                row.innerHTML = `
+                    <span class="plaka">${String(index + 1).padStart(2, '0')}</span>
+                    <span class="il-adi">
+                        <input type="text" 
+                               placeholder="${il}" 
+                               value="${item.isim}"
+                               data-il="${il}"
+                               data-taraf="${taraf}"
+                               oninput="isimDegistir('${taraf}','${il}', this.value)"
+                               onfocus="this.select()">
+                    </span>
+                    <span class="eslesme ${eslesmeDurum}" onclick="eslesmeDetay('${il}')">
+                        ${eslesmeText}
+                    </span>
+                `;
+                container.appendChild(row);
+            });
+
+            document.getElementById(taraf + 'Count').textContent = `${eslesen}/${iller.length}`;
+        }
+
+        // İsim değiştiğinde
+        function isimDegistir(taraf, il, deger) {
+            if (taraf === 'sol') {
+                solData[il].isim = deger;
+                solData[il].eslesti = false;
+            } else {
+                sagData[il].isim = deger;
+                sagData[il].eslesti = false;
+            }
+            // Karşı taraftaki eşleşmeyi temizle
+            eslesmeler[il] = null;
+            render();
+        }
+
+        // EŞLEŞTİR
+        function eslestir() {
+            let eslesenSayi = 0;
+            let beklemeSayi = 0;
+
+            iller.forEach((il) => {
+                const solIsim = solData[il].isim.trim();
+                const sagIsim = sagData[il].isim.trim();
+
+                // Sadece her iki tarafta da isim varsa eşleştir
+                if (solIsim && sagIsim) {
+                    // Aynı isim mi kontrol et (büyük/küçük harf duyarsız)
+                    if (solIsim.toLowerCase() === sagIsim.toLowerCase()) {
+                        solData[il].eslesti = true;
+                        sagData[il].eslesti = true;
+                        eslesmeler[il] = { sol: solIsim, sag: sagIsim, eslesti: true };
+                        eslesenSayi++;
+                    } else {
+                        solData[il].eslesti = false;
+                        sagData[il].eslesti = false;
+                        eslesmeler[il] = null;
+                        beklemeSayi++;
+                    }
+                } else if (solIsim || sagIsim) {
+                    // Sadece bir tarafta isim var
+                    solData[il].eslesti = false;
+                    sagData[il].eslesti = false;
+                    eslesmeler[il] = null;
+                    beklemeSayi++;
+                } else {
+                    // İki tarafta da boş
+                    solData[il].eslesti = false;
+                    sagData[il].eslesti = false;
+                    eslesmeler[il] = null;
+                }
+            });
+
+            render();
+            document.getElementById('eslesenSayi').textContent = eslesenSayi;
+            document.getElementById('bekleyenSayi').textContent = beklemeSayi;
+
+            if (eslesenSayi > 0) {
+                document.getElementById('eslesmeBilgi').innerHTML = `✅ ${eslesenSayi} il eşleşti! 🎉`;
+                document.getElementById('eslesmeBilgi').style.color = '#2ecc71';
+            } else if (beklemeSayi > 0) {
+                document.getElementById('eslesmeBilgi').innerHTML = `⏳ ${beklemeSayi} il bekliyor...`;
+                document.getElementById('eslesmeBilgi').style.color = '#f39c12';
+            } else {
+                document.getElementById('eslesmeBilgi').innerHTML = '📝 İsimleri yazıp eşleştirin';
+                document.getElementById('eslesmeBilgi').style.color = '#8892b0';
+            }
+        }
+
+        // RASTGELE EKLE
+        function rastgeleEkle() {
+            const isimler = ['Ahmet', 'Mehmet', 'Ali', 'Ayşe', 'Fatma', 'Mustafa', 'Zeynep', 'Emre', 'Elif', 'Merve',
+                'Burak', 'Ceren', 'Deniz', 'Ece', 'Furkan', 'Gamze', 'Hakan', 'Irmak', 'Kerem', 'Leyla'
+            ];
+
+            iller.forEach((il) => {
+                const rastgeleIsim = isimler[Math.floor(Math.random() * isimler.length)];
+                // Rastgele hangi tarafa ekleyelim
+                if (Math.random() > 0.5) {
+                    solData[il].isim = rastgeleIsim;
+                    solData[il].eslesti = false;
+                } else {
+                    sagData[il].isim = rastgeleIsim;
+                    sagData[il].eslesti = false;
+                }
+                eslesmeler[il] = null;
+            });
+            render();
+            document.getElementById('eslesmeBilgi').innerHTML = '🎲 Rastgele isimler eklendi! Eşleştir butonuna tıkla.';
+            document.getElementById('eslesmeBilgi').style.color = '#4facfe';
+        }
+
+        // TEMİZLE
+        function bosalt() {
+            iller.forEach((il) => {
+                solData[il].isim = '';
+                solData[il].eslesti = false;
+                sagData[il].isim = '';
+                sagData[il].eslesti = false;
+                eslesmeler[il] = null;
+            });
+            render();
+            document.getElementById('eslesenSayi').textContent = '0';
+            document.getElementById('bekleyenSayi').textContent = '0';
+            document.getElementById('eslesmeBilgi').innerHTML = '🗑 Temizlendi!';
+            document.getElementById('eslesmeBilgi').style.color = '#8892b0';
+        }
+
+        // EŞLEŞME DETAY
+        function eslesmeDetay(il) {
+            const eslesme = eslesmeler[il];
+            const solIsim = solData[il].isim || 'Boş';
+            const sagIsim = sagData[il].isim || 'Boş';
+
+            if (eslesme && eslesme.eslesti) {
+                alert(`📍 ${il}\n\n✅ EŞLEŞTİ!\n\nSol: ${solIsim}\nSağ: ${sagIsim}\n\n🔗 Başarılı eşleşme!`);
+            } else if (solIsim !== 'Boş' || sagIsim !== 'Boş') {
+                alert(`📍 ${il}\n\n⏳ BEKLİYOR\n\nSol: ${solIsim}\nSağ: ${sagIsim}\n\n📝 İsimler eşleşmiyor veya eksik!`);
+            } else {
+                alert(`📍 ${il}\n\n☐ BOŞ\n\nHer iki tarafa da isim giriniz.`);
+            }
+        }
+
+        // İSTATİSTİK GÜNCELLE
+        function updateStats() {
+            let eslesen = 0;
+            let bekleyen = 0;
+            iller.forEach((il) => {
+                if (solData[il].eslesti && sagData[il].eslesti) eslesen++;
+                else if (solData[il].isim || sagData[il].isim) bekleyen++;
+            });
+            document.getElementById('eslesenSayi').textContent = eslesen;
+            document.getElementById('bekleyenSayi').textContent = bekleyen;
+        }
+
+        function updateEslesmeBilgi() {
+            // Boş bırak, eslestir fonksiyonu güncelliyor
+        }
+
+        // POPUP (Kullanılmıyor ama kalabilir)
+        function popupKapat() {
+            document.getElementById('overlay').classList.remove('active');
+            document.getElementById('popup').classList.remove('active');
+        }
+
+        function popupKaydet() {
+            // Kullanılmıyor
+            popupKapat();
+        }
+
+        // BAŞLAT
+        baslat();
+    </script>
+</body>
+</html>

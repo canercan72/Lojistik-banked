@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Çift Taraflı Eşleştirme</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Arial;background:#0a0e1a;color:#fff;padding:10px}
+.container{max-width:1400px;margin:auto}
+.header{background:#1a1f36;padding:12px 20px;border-radius:10px;margin-bottom:15px;border:1px solid #2a2f4a;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.header h1{font-size:20px;color:#4facfe}
+.header .stats{display:flex;gap:15px;font-size:13px;color:#8892b0}
+.header .stats strong{color:#4facfe}
+.main-grid{display:grid;grid-template-columns:1fr 100px 1fr;gap:15px;height:calc(100vh - 130px)}
+.panel{background:#1a1f36;border-radius:10px;padding:10px;border:1px solid #2a2f4a;display:flex;flex-direction:column}
+.panel-title{color:#8892b0;font-size:13px;padding-bottom:8px;border-bottom:1px solid #2a2f4a;display:flex;justify-content:space-between;margin-bottom:8px}
+.panel-body{flex:1;overflow-y:auto}
+.panel-body::-webkit-scrollbar{width:4px}
+.panel-body::-webkit-scrollbar-thumb{background:#4facfe;border-radius:10px}
+.il-row{display:flex;align-items:center;gap:8px;padding:4px 6px;margin:2px 0;border-radius:6px;background:rgba(255,255,255,0.02);font-size:13px}
+.il-row .plaka{color:#4facfe;font-weight:bold;font-size:11px;width:35px}
+.il-row .il-adi{flex:1;color:#ccc}
+.il-row input{background:transparent;border:1px solid #2a2f4a;border-radius:4px;color:#fff;padding:3px 6px;font-size:13px;width:100%;outline:none}
+.il-row input:focus{border-color:#4facfe}
+.il-row .durum{font-size:11px;padding:2px 10px;border-radius:10px;min-width:60px;text-align:center}
+.durum.eslesti{background:#2ecc71;color:#fff}
+.durum.beklemede{background:#f39c12;color:#fff}
+.durum.bos{background:rgba(255,255,255,0.05);color:#555}
+.orta{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:10px}
+.orta .ok{font-size:30px;color:#4facfe}
+.orta button{padding:8px 12px;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:12px;width:100%}
+.orta .btn-yesil{background:#2ecc71;color:#fff}
+.orta .btn-mavi{background:#4facfe;color:#fff}
+.orta .btn-kirmizi{background:#e74c3c;color:#fff}
+.orta .btn-turuncu{background:#f39c12;color:#fff}
+.orta button:hover{transform:scale(1.05)}
+.bilgi{font-size:12px;color:#8892b0;text-align:center;margin-top:10px}
+@media(max-width:900px){.main-grid{grid-template-columns:1fr;height:auto}.panel{max-height:350px}.orta{flex-direction:row;flex-wrap:wrap;padding:10px}.orta button{width:auto}}
+</style>
+</head>
+<body>
+
+<div class="container">
+<div class="header">
+<h1>🔄 Çift Taraflı Eşleştirme</h1>
+<div class="stats">
+<span>📍 <strong id="toplam">81</strong> İl</span>
+<span>✅ <strong id="eslesen">0</strong> Eşleşti</span>
+<span>⏳ <strong id="bekleyen">0</strong> Bekliyor</span>
+</div>
+</div>
+
+<div class="main-grid">
+<div class="panel">
+<div class="panel-title"><span>📝 SOL</span><span id="solSayi">0/81</span></div>
+<div class="panel-body" id="solPanel"></div>
+</div>
+
+<div class="orta">
+<div class="ok">➜</div>
+<button class="btn-yesil" onclick="eslestir()">⚡ EŞLEŞTİR</button>
+<button class="btn-mavi" onclick="rastgele()">🎲 RASTGELE</button>
+<button class="btn-turuncu" onclick="ornekDoldur()">📝 ÖRNEK</button>
+<button class="btn-kirmizi" onclick="temizle()">🗑 TEMİZLE</button>
+<div class="ok">➜</div>
+<div class="bilgi" id="bilgi">İsimleri yazıp eşleştirin</div>
+</div>
+
+<div class="panel">
+<div class="panel-title"><span>📝 SAĞ</span><span id="sagSayi">0/81</span></div>
+<div class="panel-body" id="sagPanel"></div>
+</div>
+</div>
+</div>
+
+<script>
+const iller = [
+"Adana","Adıyaman","Afyonkarahisar","Ağrı","Aksaray","Amasya","Ankara",
+"Antalya","Ardahan","Artvin","Aydın","Balıkesir","Bartın","Batman",
+"Bayburt","Bilecik","Bingöl","Bitlis","Bolu","Burdur","Bursa",
+"Çanakkale","Çankırı","Çorum","Denizli","Diyarbakır","Düzce",
+"Edirne","Elazığ","Erzincan","Erzurum","Eskişehir","Gaziantep",
+"Giresun","Gümüşhane","Hakkâri","Hatay","Iğdır","Isparta",
+"İstanbul","İzmir","Kahramanmaraş","Karabük","Karaman","Kars",
+"Kastamonu","Kayseri","Kırıkkale","Kırklareli","Kırşehir",
+"Kilis","Kocaeli","Konya","Kütahya","Malatya","Manisa",
+"Mardin","Mersin","Muğla","Muş","Nevşehir","Niğde","Ordu",
+"Osmaniye","Rize","Sakarya","Samsun","Siirt","Sinop","Sivas",
+"Şanlıurfa","Şırnak","Tekirdağ","Tokat","Trabzon","Tunceli",
+"Uşak","Van","Yalova","Yozgat","Zonguldak"
+];
+
+let sol = {};
+let sag = {};
+let eslesme = {};
+
+function baslat(){
+iller.forEach(il=>{
+sol[il]='';
+sag[il]='';
+eslesme[il]=false;
+});
+render();
+}
+
+function render(){
+renderPanel('sol',sol);
+renderPanel('sag',sag);
+istatistik();
+}
+
+function renderPanel(taraf,data){
+const container=document.getElementById(taraf+'Panel');
+container.innerHTML='';
+let dolu=0;
+iller.forEach((il,index)=>{
+const val=data[il]||'';
+if(val) dolu++;
+const durum = eslesme[il] ? 'eslesti' : (val ? 'beklemede' : 'bos');
+const durumText = eslesme[il] ? '✅ Eşleşti' : (val ? '⏳ Bekliyor' : '☐ Boş');
+const row=document.createElement('div');
+row.className='il-row';
+row.innerHTML=`
+<span class="plaka">${String(index+1).padStart(2,'0')}</span>
+<span class="il-adi">${il}</span>
+<input type="text" 
+placeholder="İsim girin" 
+value="${val}"
+oninput="guncelle('${taraf}','${il}',this.value)">
+<span class="durum ${durum}">${durumText}</span>
+`;
+container.appendChild(row);
+});
+document.getElementById(taraf+'Sayi').textContent=dolu+'/'+iller.length;
+}
+
+function guncelle(taraf,il,val){
+if(taraf==='sol') sol[il]=val;
+else sag[il]=val;
+eslesme[il]=false;
+render();
+}
+
+function eslestir(){
+let es=0,bek=0;
+iller.forEach(il=>{
+const s=sol[il]||'';
+const g=sag[il]||'';
+if(s && g && s.toLowerCase()===g.toLowerCase()){
+eslesme[il]=true;
+es++;
+} else {
+eslesme[il]=false;
+if(s || g) bek++;
+}
+});
+render();
+document.getElementById('bilgi').innerHTML=es>0 ? '✅ '+es+' il eşleşti!' : (bek>0 ? '⏳ '+bek+' il bekliyor...' : '📝 İsim girip eşleştirin');
+document.getElementById('bilgi').style.color=es>0?'#2ecc71':(bek>0?'#f39c12':'#8892b0');
+}
+
+function rastgele(){
+const isimler=['Ahmet','Mehmet','Ali','Ayşe','Fatma','Mustafa','Zeynep','Emre','Elif','Merve'];
+iller.forEach(il=>{
+if(Math.random()>0.5) sol[il]=isimler[Math.floor(Math.random()*isimler.length)];
+if(Math.random()>0.5) sag[il]=isimler[Math.floor(Math.random()*isimler.length)];
+eslesme[il]=false;
+});
+render();
+document.getElementById('bilgi').innerHTML='🎲 Rastgele isimler eklendi!';
+document.getElementById('bilgi').style.color='#4facfe';
+}
+
+function ornekDoldur(){
+const ornekler=[
+['Ahmet','Ahmet'],['Mehmet','Ali'],['Ali','Ali'],
+['Ayşe','Ayşe'],['Fatma','Fatma'],['Mustafa','Mehmet'],
+['Zeynep','Zeynep'],['Emre','Emre'],['Elif','Elif'],
+['Merve','Merve'],['Burak','Burak'],['Ceren','Ceren']
+];
+iller.forEach((il,index)=>{
+const o=ornekler[index%ornekler.length];
+sol[il]=o[0];
+sag[il]=o[1];
+eslesme[il]=false;
+});
+render();
+document.getElementById('bilgi').innerHTML='📝 Örnek isimler dolduruldu! Eşleştir butonuna tıkla.';
+document.getElementById('bilgi').style.color='#f39c12';
+}
+
+function temizle(){
+iller.forEach(il=>{
+sol[il]='';
+sag[il]='';
+eslesme[il]=false;
+});
+render();
+document.getElementById('bilgi').innerHTML='🗑 Temizlendi!';
+document.getElementById('bilgi').style.color='#8892b0';
+}
+
+function istatistik(){
+let es=0,bek=0;
+iller.forEach(il=>{
+if(eslesme[il]) es++;
+else if(sol[il]||sag[il]) bek++;
+});
+document.getElementById('eslesen').textContent=es;
+document.getElementById('bekleyen').textContent=bek;
+}
+
+baslat();
+</script>
+</body>
+</html>

@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚛 Yük Eşleştirme Algoritması</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0e1a;
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1600px; margin: 0 auto; }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, #1a1f36 0%, #2a1f36 100%);
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 1px solid #2a2f4a;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .header h1 {
+            font-size: 24px;
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header .stats {
+            display: flex;
+            gap: 20px;
+            font-size: 13px;
+            flex-wrap: wrap;
+        }
+        .header .stats span {
+            color: #8892b0;
+        }
+        .header .stats strong {
+            color: #4facfe;
+        }
+        .stats .green strong { color: #2ecc71; }
+        .stats .orange strong { color: #f39c12; }
+        .stats .red strong { color: #e74c3c; }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 280px 1fr 320px;
+            gap: 20px;
+            height: calc(100vh - 150px);
+        }
+        
+        /* SOL PANEL */
+        .iller-panel {
+            background: linear-gradient(180deg, #1a1f36, #0d1225);
+            border-radius: 15px;
+            padding: 15px;
+            border: 1px solid #2a2f4a;
+            overflow-y: auto;
+        }
+        .iller-panel::-webkit-scrollbar { width: 5px; }
+        .iller-panel::-webkit-scrollbar-thumb { background: #4facfe; border-radius: 10px; }
+        
+        .panel-title {
+            font-size: 14px;
+            color: #8892b0;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #2a2f4a;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .il-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 10px;
+            margin: 3px 0;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.03);
+            transition: all 0.3s;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .il-item:hover {
+            background: rgba(79, 172, 254, 0.1);
+            transform: translateX(5px);
+        }
+        .il-item .plaka {
+            color: #4facfe;
+            font-weight: bold;
+            font-size: 11px;
+            width: 30px;
+        }
+        .il-item .il-adi { flex: 1; margin-left: 8px; }
+        .il-item .yuk-badge {
+            background: #2ecc71;
+            color: #fff;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        .il-item .yok-badge {
+            background: #e74c3c;
+            color: #fff;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        .il-item .bekle-badge {
+            background: #f39c12;
+            color: #fff;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        
+        /* ORTA PANEL */
+        .eslesme-panel {
+            background: linear-gradient(180deg, #1a1f36, #0d1225);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid #2a2f4a;
+            display: flex;
+            flex-direction: column;
+        }
+        .eslesme-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .eslesme-header h3 { font-size: 16px; color: #4facfe; }
+        .controls { display: flex; gap: 10px; flex-wrap: wrap; }
+        
+        .btn {
+            padding: 6px 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn:hover { transform: scale(1.05); }
+        .btn-success { background: #2ecc71; color: #fff; }
+        .btn-success:hover { background: #27ae60; }
+        .btn-primary { background: #4facfe; color: #fff; }
+        .btn-primary:hover { background: #3d8fd9; }
+        .btn-warning { background: #f39c12; color: #fff; }
+        .btn-warning:hover { background: #d68910; }
+        .btn-danger { background: #e74c3c; color: #fff; }
+        .btn-danger:hover { background: #c0392b; }
+        
+        .eslesme-orta {
+            flex: 1;
+            overflow-y: auto;
+            padding: 5px;
+        }
+        .eslesme-orta::-webkit-scrollbar { width: 5px; }
+        .eslesme-orta::-webkit-scrollbar-thumb { background: #4facfe; border-radius: 10px; }
+        
+        .eslesme-kart {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 12px 15px;
+            border: 1px solid #2a2f4a;
+            animation: slideIn 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .eslesme-kart:hover {
+            background: rgba(79, 172, 254, 0.1);
+            transform: scale(1.02);
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .eslesme-kart .from { color: #4facfe; font-weight: bold; font-size: 14px; min-width: 80px; }
+        .eslesme-kart .arrow { color: #f39c12; margin: 0 15px; font-size: 20px; }
+        .eslesme-kart .to { color: #2ecc71; font-weight: bold; font-size: 14px; min-width: 80px; }
+        .eslesme-kart .arac-info { color: #8892b0; font-size: 12px; background: rgba(255,255,255,0.05); padding: 3px 12px; border-radius: 15px; }
+        .eslesme-kart .mesafe { color: #f39c12; font-size: 12px; }
+        .eslesme-kart .status { font-size: 11px; padding: 3px 10px; border-radius: 12px; }
+        .status.eslesti { background: #2ecc71; color: #fff; }
+        .status.beklemede { background: #f39c12; color: #fff; }
+        
+        .bos-mesaj {
+            color: #8892b0;
+            text-align: center;
+            padding: 40px;
+            font-size: 14px;
+        }
+        .bos-mesaj .icon { font-size: 40px; margin-bottom: 10px; }
+        
+        /* SAĞ PANEL */
+        .arac-panel {
+            background: linear-gradient(180deg, #1a1f36, #0d1225);
+            border-radius: 15px;
+            padding: 15px;
+            border: 1px solid #2a2f4a;
+            overflow-y: auto;
+        }
+        .arac-panel::-webkit-scrollbar { width: 5px; }
+        .arac-panel::-webkit-scrollbar-thumb { background: #4facfe; border-radius: 10px; }
+        
+        .arac-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 10px;
+            margin: 4px 0;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.03);
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+        .arac-item .arac-plaka { color: #4facfe; font-weight: bold; width: 50px; }
+        .arac-item .arac-konum { color: #8892b0; flex: 1; margin: 0 10px; }
+        .arac-item .arac-durum { font-size: 10px; padding: 2px 10px; border-radius: 12px; }
+        .arac-item .arac-durum.musait { background: #2ecc71; color: #fff; }
+        .arac-item .arac-durum.dolu { background: #e74c3c; color: #fff; }
+        .arac-item .arac-yuk { color: #2ecc71; font-size: 10px; margin-left: 5px; }
+        
+        /* POPUP */
+        .yuk-detay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #1a1f36;
+            border: 1px solid #4facfe;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            z-index: 1000;
+            display: none;
+        }
+        .yuk-detay.active { display: block; animation: popIn 0.3s ease; }
+        @keyframes popIn {
+            from { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+            to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+        .yuk-detay .close { float: right; cursor: pointer; color: #e74c3c; font-size: 24px; }
+        .yuk-detay h3 { color: #4facfe; margin-bottom: 15px; }
+        .detay-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #2a2f4a;
+            font-size: 14px;
+        }
+        .detay-item .label { color: #8892b0; }
+        .detay-item .value { color: #fff; font-weight: bold; }
+        
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 999;
+            display: none;
+        }
+        .overlay.active { display: block; }
+        
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #0d1225; }
+        ::-webkit-scrollbar-thumb { background: #4facfe; border-radius: 10px; }
+        
+        @media (max-width: 1200px) {
+            .main-grid { grid-template-columns: 220px 1fr 250px; }
+        }
+        @media (max-width: 900px) {
+            .main-grid { grid-template-columns: 1fr; height: auto; }
+            .iller-panel, .arac-panel { max-height: 300px; }
+            .eslesme-panel { min-height: 400px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚛 Yük Eşleştirme Algoritması</h1>
+            <div class="stats">
+                <span>📍 <strong id="toplamIl">81</strong> İl</span>
+                <span>🚚 <strong id="toplamArac">81</strong> Araç</span>
+                <span class="green">📦 <strong id="toplamYuk">0</strong> Eşleşti</span>
+                <span class="orange">⏳ <strong id="bekleyenYuk">0</strong> Beklemede</span>
+                <span>📏 <strong id="ortalamaMesafe">0</strong> km</span>
+            </div>
+        </div>
+        
+        <div class="main-grid">
+            <!-- SOL: İLLER -->
+            <div class="iller-panel">
+                <div class="panel-title">
+                    <span>📍 İller</span>
+                    <span id="ilDurum">81 il</span>
+                </div>
+                <div id="ilListesi"></div>
+            </div>
+            
+            <!-- ORTA: EŞLEŞMELER -->
+            <div class="eslesme-panel">
+                <div class="eslesme-header">
+                    <h3>🔄 Eşleşmeler</h3>
+                    <div class="controls">
+                        <button class="btn btn-success" onclick="yukTalebiOlustur()">📦 Yük Oluştur</button>
+                        <button class="btn btn-primary" onclick="eslestirmeYap()">⚡ Eşleştir</button>
+                        <button class="btn btn-danger" onclick="sifirla()">🗑 Sıfırla</button>
+                    </div>
+                </div>
+                <div class="eslesme-orta" id="eslesmeListesi">
+                    <div class="bos-mesaj">
+                        <div class="icon">🚀</div>
+                        <p>Önce "Yük Oluştur" sonra "Eşleştir" butonuna tıkla</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- SAĞ: ARAÇLAR -->
+            <div class="arac-panel">
+                <div class="panel-title">
+                    <span>🚚 Araçlar</span>
+                    <span id="aracDurum">0/81 müsait</span>
+                </div>
+                <div id="aracListesi"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- POPUP -->
+    <div class="overlay" id="overlay" onclick="popupKapat()"></div>
+    <div class="yuk-detay" id="yukDetay">
+        <span class="close" onclick="popupKapat()">✕</span>
+        <h3>📋 Yük Detayı</h3>
+        <div id="detayIcerik"></div>
+    </div>
+
+    <script>
+        const iller = [
+            "Adana","Adıyaman","Afyonkarahisar","Ağrı","Aksaray","Amasya","Ankara",
+            "Antalya","Ardahan","Artvin","Aydın","Balıkesir","Bartın","Batman",
+            "Bayburt","Bilecik","Bingöl","Bitlis","Bolu","Burdur","Bursa",
+            "Çanakkale","Çankırı","Çorum","Denizli","Diyarbakır","Düzce",
+            "Edirne","Elazığ","Erzincan","Erzurum","Eskişehir","Gaziantep",
+            "Giresun","Gümüşhane","Hakkâri","Hatay","Iğdır","Isparta",
+            "İstanbul","İzmir","Kahramanmaraş","Karabük","Karaman","Kars",
+            "Kastamonu","Kayseri","Kırıkkale","Kırklareli","Kırşehir",
+            "Kilis","Kocaeli","Konya","Kütahya","Malatya","Manisa",
+            "Mardin","Mersin","Muğla","Muş","Nevşehir","Niğde","Ordu",
+            "Osmaniye","Rize","Sakarya","Samsun","Siirt","Sinop","Sivas",
+            "Şanlıurfa","Şırnak","Tekirdağ","Tokat","Trabzon","Tunceli",
+            "Uşak","Van","Yalova","Yozgat","Zonguldak"
+        ];
+
+        let araclar = {};
+        let yukler = [];
+        let eslesmeler = [];
+        let istatistikler = { toplamYuk: 0, bekleyen: 0, ortalamaMesafe: 0 };
+
+        function baslat() {
+            iller.forEach((il, index) => {
+                araclar[il] = {
+                    plaka: `34${String(index+1).padStart(2, '0')}XYZ`,
+                    konum: il,
+                    musait: true,
+                    yukler: [],
+                    toplamKm: 0
+                };
+            });
+            ilListesiniGoster();
+            aracListesiniGoster();
+            istatistikleriGuncelle();
+        }
+
+        function ilListesiniGoster() {
+            const container = document.getElementById('ilListesi');
+            container.innerHTML = '';
+            iller.forEach((il, index) => {
+                const div = document.createElement('div');
+                div.className = 'il-item';
+                const durum = Math.random();
+                let badge = durum < 0.3 ? '<span class="yuk-badge">📦 Yük Var</span>' :
+                            durum < 0.6 ? '<span class="bekle-badge">⏳ Bekliyor</span>' :
+                            '<span class="yok-badge">🚫 Boş</span>';
+                div.innerHTML = `
+                    <span class="plaka">${String(index+1).padStart(2, '0')}</span>
+                    <span class="il-adi">${il}</span>
+                    ${badge}
+                `;
+                div.onclick = () => ilDetay(il);
+                container.appendChild(div);
+            });
+        }
+
+        function aracListesiniGoster() {
+            const container = document.getElementById('aracListesi');
+            container.innerHTML = '';
+            let musaitSayi = 0;
+            Object.keys(araclar).forEach((il) => {
+                const arac = araclar[il];
+                if (arac.musait) musaitSayi++;
+                const div = document.createElement('div');
+                div.className = 'arac-item';
+                div.innerHTML = `
+                    <span class="arac-plaka">${arac.plaka}</span>
+                    <span class="arac-konum">📍 ${arac.konum}</span>
+                    <span class="arac-durum ${arac.musait ? 'musait' : 'dolu'}">
+                        ${arac.musait ? '✅ Müsait' : '🔴 Dolu'}
+                    </span>
+                    ${arac.yukler.length > 0 ? `<span class="arac-yuk">📦${arac.yukler.length}</span>` : ''}
+                `;
+                container.appendChild(div);
+            });
+            document.getElementById('aracDurum').textContent = `${musaitSayi}/${Object.keys(araclar).length} müsait`;
+        }
+
+        function yukTalebiOlustur() {
+            yukler = [];
+            iller.forEach((il) => {
+                let varis = il;
+                while (varis === il) varis = iller[Math.floor(Math.random() * iller.length)];
+                yukler.push({
+                    id: `YUK-${String(yukler.length+1).padStart(3, '0')}`,
+                    nereden: il,
+                    nereye: varis,
+                    mesafe: Math.floor(Math.random() * 900 + 100),
+                    agirlik: Math.floor(Math.random() * 4500 + 500),
+                    durum: 'beklemede'
+                });
+            });
+            
+            const container = document.getElementById('eslesmeListesi');
+            container.innerHTML = '';
+            yukler.slice(0, 20).forEach((yuk) => {
+                const kart = document.createElement('div');
+                kart.className = 'eslesme-kart';
+                kart.innerHTML = `
+                    <span class="from">📍 ${yuk.nereden}</span>
+                    <span class="arrow">➜</span>
+                    <span class="to">📍 ${yuk.nereye}</span>
+                    <span class="mesafe">${yuk.mesafe} km</span>
+                    <span class="status beklemede">⏳ Beklemede</span>
+                `;
+                kart.onclick = () => yukDetayGoster(yuk);
+                container.appendChild(kart);
+            });
+            if (yukler.length > 20) {
+                const more = document.createElement('div');
+                more.className = 'bos-mesaj';
+                more.style.padding = '10px';
+                more.innerHTML = `<span style="color: #8892b0;">+ ${yukler.length - 20} yük daha...</span>`;
+                container.appendChild(more);
+            }
+            istatistikler.bekleyen = yukler.length;
+            istatistikleriGuncelle();
+            document.getElementById('bekleyenYuk').textContent = yukler.length;
+        }
+
+        function eslestirmeYap() {
+            if (yukler.length === 0) {
+                alert('⚠️ Önce "Yük Oluştur" butonuna tıkla!');
+                return;
+            }
+            
+            eslesmeler = [];
+            const siraliYukler = [...yukler].sort((a, b) => a.mesafe - b.mesafe);
+            
+            siraliYukler.forEach((yuk) => {
+                if (yuk.durum === 'eslesti') return;
+                let uygunArac = null;
+                let enDusukMesafe = Infinity;
+                
+                Object.keys(araclar).forEach((il) => {
+                    const arac = araclar[il];
+                    if (arac.musait && arac.konum === yuk.nereden) {
+                        if (yuk.mesafe < enDusukMesafe) {
+                            enDusukMesafe = yuk.mesafe;
+                            uygunArac = il;
+                        }
+                    }
+                });
+                
+                if (!uygunArac) {
+                    Object.keys(araclar).forEach((il) => {
+                        const arac = araclar[il];
+                        if (arac.musait) {
+                            const mesafe = Math.floor(Math.random() * 300 + 100);
+                            if (mesafe < enDusukMesafe) {
+                                enDusukMesafe = mesafe;
+                                uygunArac = il;
+                            }
+                        }
+                    });
+                }
+                
+                if (uygunArac) {
+                    yuk.durum = 'eslesti';
+                    const arac = araclar[uygunArac];
+                    arac.musait = false;
+                    arac.konum = yuk.nereye;
+                    arac.yukler.push(yuk.id);
+                    arac.toplamKm += yuk.mesafe;
+                    eslesmeler.push({ ...yuk, arac: uygunArac, aracPlaka: arac.plaka });
+                }
+            });
+            
+            const bekleyenler = yukler.filter(y => y.durum === 'beklemede');
+            istatistikler.bekleyen = bekleyenler.length;
+            istatistikler.toplamYuk = eslesmeler.length;
+            if (eslesmeler.length > 0) {
+                const toplamMesafe = eslesmeler.reduce((sum, e) => sum + e.mesafe, 0);
+                istatistikler.ortalamaMesafe = Math.round(toplamMesafe / eslesmeler.length);
+            }
+            
+            const container = document.getElementById('eslesmeListesi');
+            container.innerHTML = '';
+            eslesmeler.slice(0, 20).forEach((eslesme) => {
+                const kart = document.createElement('div');
+                kart.className = 'eslesme-kart';
+                kart.innerHTML = `
+                    <span class="from">📍 ${eslesme.nereden}</span>
+                    <span class="arrow">➜</span>
+                    <span class="to">📍 ${eslesme.nereye}</span>
+                    <span class="arac-info">🚚 ${eslesme.aracPlaka}</span>
+                    <span class="mesafe">${eslesme.mesafe} km</span>
+                    <span class="status eslesti">✅ Eşleşti</span>
+                `;
+                kart.onclick = () => yukDetayGoster(eslesme);
+                container.appendChild(kart);
+            });
+            
+            if (eslesmeler.length > 20) {
+                const more = document.createElement('div');
+                more.className = 'bos-mesaj';
+                more.style.padding = '10px';
+                more.innerHTML = `<span style="color: #8892b0;">+ ${eslesmeler.length - 20} eşleşme daha...</span>`;
+                container.appendChild(more);
+            }
+            
+            if (bekleyenler.length > 0) {
+                const bekleDiv = document.createElement('div');
+                bekleDiv.style.marginTop = '15px';
+                bekleDiv.style.padding = '10px';
+                bekleDiv.style.background = 'rgba(243, 156, 18, 0.1)';
+                bekleDiv.style.borderRadius = '8px';
+                bekleDiv.style.border = '1px solid #f39c12';
+                bekleDiv.innerHTML = `<span style="color: #f39c12;">⏳ ${bekleyenler.length} yük beklemede!</span>`;
+                container.appendChild(bekleDiv);
+            }
+            
+            istatistikleriGuncelle();
+            aracListesiniGoster();
+            ilListesiniGoster();
+        }
+
+        function sifirla() {
+            yukler = [];
+            eslesmeler = [];
+            istatistikler = { toplamYuk: 0, bekleyen: 0, ortalamaMesafe: 0 };
+            Object.keys(araclar).forEach((il) => {
+                araclar[il].musait = true;
+                araclar[il].konum = il;
+                araclar[il].yukler = [];
+                araclar[il].toplamKm = 0;
+            });
+            document.getElementById('eslesmeListesi').innerHTML = `
+                <div class="bos-mesaj">
+                    <div class="icon">🚀</div>
+                    <p>Önce "Yük Oluştur" sonra "Eşleştir" butonuna tıkla</p>
+                </div>
+            `;
+            istatistikleriGuncelle();
+            aracListesiniGoster();
+            ilListesiniGoster();
+        }
+
+        function istatistikleriGuncelle() {
+            document.getElementById('toplamYuk').textContent = istatistikler.toplamYuk;
+            document.getElementById('bekleyenYuk').textContent = istatistikler.bekleyen;
+            document.getElementById('ortalamaMesafe').textContent = istatistikler.ortalamaMesafe;
+        }
+
+        function yukDetayGoster(yuk) {
+            document.getElementById('overlay').classList.add('active');
+            document.getElementById('yukDetay').classList.add('active');
+            document.getElementById('detayIcerik').innerHTML = `
+                <div class="detay-item"><span class="label">Yük ID</span><span class="value">${yuk.id}</span></div>
+                <div class="detay-item"><span class="label">Nereden</span><span class="value">📍 ${yuk.nereden}</span></div>
+                <div class="detay-item"><span class="label">Nereye</span><span class="value">📍 ${yuk.nereye}</span></div>
+                <div class="detay-item"><span class="label">Mesafe</span><span class="value">${yuk.mesafe} km</span></div>
+                <div class="detay-item"><span class="label">Ağırlık</span><span class="value">${yuk.agirlik || '?'} kg</span></div>
+                <div class="detay-item"><span class="label">Durum</span><span class="value">${yuk.durum === 'eslesti' ? '✅ Eşleşti' : '⏳ Beklemede'}</span></div>
+                ${yuk.arac ? `<div class="detay-item"><span class="label">Araç</span><span class="value">🚚 ${yuk.aracPlaka || yuk.arac}</span></div>` : ''}
+            `;
+        }
+
+        function popupKapat() {
+            document.getElementById('overlay').classList.remove('active');
+            document.getElementById('yukDetay').classList.remove('active');
+        }
+
+        function ilDetay(il) {
+            const arac = araclar[il];
+            alert(`📍 ${il}\n🚚 Plaka: ${arac.plaka}\n📦 Yük: ${arac.yukler.length}\n📏 Toplam KM: ${arac.toplamKm}\n${arac.musait ? '✅ Müsait' : '🔴 Dolu'}`);
+        }
+
+        baslat();
+    </script>
+</body>
+</html>
